@@ -1,0 +1,75 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:alpine
+    container_name: db
+    volumes:
+      - db_data:/var/lib/postgresql/data/
+    env_file:
+      - .env
+    networks:
+      - uba_network
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PG_ADMIN_EMAIL}
+      - PGADMIN_DEFAULT_PASSWORD=${PG_ADMIN_PASS}
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    env_file:
+      - .env
+    ports:
+      - 1234:80
+    depends_on:
+      - db
+    networks:
+      - uba_network
+  localstack:
+    image: localstack/localstack
+    container_name: localstack
+    environment:
+      - LOCALSTACK_SERVICES=s3
+      - DEBUG=1
+      - DATA_DIR=/tmp/localstack/data
+      - DEFAULT_REGION=${AWS_DEFAULT_REGION}
+    env_file:
+      - .env
+    ports:
+      - 4566:4566
+    networks:
+      - uba_network
+    volumes:
+      - ./.localstack/:/tmp/localstack
+      - /var/run/docker.sock:/var/run/docker.sock
+  backend:
+    build: ./
+    container_name: app
+    ports:
+      - 8000:8000
+    volumes:
+      - ./backend/:/app/backend/
+    environment:
+      - MODULE_NAME=backend.main
+      - VARIABLE_NAME=app
+      - PORT=8000
+      - WORKERS_PER_CORE=2
+    env_file:
+      - .env
+    depends_on:
+      - db
+    networks:
+      - uba_network
+#    nginx:
+#        build: ./_config/nginx
+#        ports:
+#            - 80:80
+#        depends_on:
+#            - app
+networks:
+  uba_network:
+    driver: bridge
+volumes:
+  db_data:
+  pgadmin_data:
