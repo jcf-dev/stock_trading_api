@@ -11,11 +11,11 @@ ENV PYTHONUNBUFFERED 1
 COPY ./backend/ ./backend/
 
 # Copy alembic migrations
-COPY ./.migrations/ ./.migrations/
+#COPY ./.migrations/ ./.migrations/
 COPY ./alembic.ini .
 
 # Copy Scripts
-COPY ./prestart.sh .
+#COPY ./prestart.sh .
 
 # Upgrade PIP
 RUN pip install pip --upgrade
